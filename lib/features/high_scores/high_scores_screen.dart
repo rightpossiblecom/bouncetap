@@ -70,7 +70,7 @@ class HighScoresScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Card(
         elevation: elevation ?? 0.5,
-        color: elevation != null ? colorScheme.surfaceVariant : null,
+        color: elevation != null ? colorScheme.surfaceContainerHighest : null,
         child: ListTile(
           leading: Container(
             width: 40,
