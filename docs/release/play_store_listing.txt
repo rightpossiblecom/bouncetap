@@ -1,0 +1,15 @@
+Short Description: Master the bounce! Tap to keep the ball alive in this minimalist arcade challenge.
+
+Full Description:
+BounceTap is the ultimate test of timing and focus. Simple to learn but hard to master, this minimalist arcade game will keep you coming back for "just one more go."
+
+The goal is simple: keep the vibrant blue ball in the air by tapping it at the perfect moment. As your score increases, so does the speed and intensity. How long can you last?
+
+Features:
+- Pure Minimalism: A sleek, dark-themed design that keeps your focus on the gameplay.
+- One-Tap Brilliance: Simple, responsive controls perfect for quick gaming sessions.
+- Difficulty Scaling: The game evolves with your skill level, offering a constant challenge.
+- High Score Tracking: Compete against yourself and aim for the top.
+- Offline Play: No internet? No problem. BounceTap is ready whenever you are.
+
+Step into the flow and find your rhythm with BounceTap. Download now and start tapping!
