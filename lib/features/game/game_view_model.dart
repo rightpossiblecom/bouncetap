@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'dart:developer' as developer;
 
 class GameViewModel extends ChangeNotifier {
   // Physics constants
@@ -22,24 +23,24 @@ class GameViewModel extends ChangeNotifier {
   late bool isGameRunning;
 
   // Screen dimensions (set by screen)
-  late double screenWidth;
-  late double screenHeight;
+  double screenWidth = 0;
+  double screenHeight = 0;
 
   // Update timer
   Timer? _gameTimer;
-  late Stopwatch _stopwatch;
+  Stopwatch? _stopwatch;
 
   GameViewModel() {
-    screenWidth = 0;
-    screenHeight = 0;
+    developer.log('GameViewModel initialized', name: 'GameViewModel');
     highScore = 0;
     allTimeHighScores = [120, 85, 42, 21, 15]; // Mock high scores
     _resetGame();
   }
 
   void _resetGame() {
-    ballX = 0;
-    ballY = 0;
+    developer.log('Resetting game state', name: 'GameViewModel');
+    ballX = screenWidth > 0 ? screenWidth / 2 : 0;
+    ballY = screenHeight > 0 ? screenHeight / 2 : 0;
     ballVelocityY = 0;
     currentGravity = initialGravity;
     score = 0;
@@ -48,6 +49,10 @@ class GameViewModel extends ChangeNotifier {
   }
 
   void initializeScreen(double width, double height) {
+    developer.log(
+      'Initializing screen: $width x $height',
+      name: 'GameViewModel',
+    );
     screenWidth = width;
     screenHeight = height;
 
@@ -56,10 +61,24 @@ class GameViewModel extends ChangeNotifier {
       ballX = screenWidth / 2;
       ballY = screenHeight / 2;
       ballVelocityY = 0;
+      notifyListeners();
     }
   }
 
   void startGame() {
+    if (screenWidth <= 0 || screenHeight <= 0) {
+      developer.log(
+        'Cannot start game: invalid screen dimensions ($screenWidth x $screenHeight)',
+        name: 'GameViewModel',
+        level: 900,
+      );
+      return;
+    }
+
+    developer.log('Starting game', name: 'GameViewModel');
+    _gameTimer?.cancel();
+    _stopwatch?.stop();
+
     _resetGame();
     isGameRunning = true;
     ballX = screenWidth / 2;
@@ -77,13 +96,14 @@ class GameViewModel extends ChangeNotifier {
 
   void _updateGame() {
     if (!isGameRunning || isGameOver) return;
+    if (_stopwatch == null) return;
 
     double deltaTime = 0.016; // 16ms in seconds
 
     // Increase gravity over time (but cap it at maxGravity)
     currentGravity =
         (initialGravity +
-                (_stopwatch.elapsedMilliseconds / 1000) * gravityIncreaseRate)
+                (_stopwatch!.elapsedMilliseconds / 1000) * gravityIncreaseRate)
             .clamp(initialGravity, maxGravity);
 
     // Apply gravity
@@ -93,15 +113,19 @@ class GameViewModel extends ChangeNotifier {
     ballY += ballVelocityY * deltaTime;
 
     // Update score based on elapsed time (1 point per second)
-    score = _stopwatch.elapsedMilliseconds ~/ 1000;
+    score = _stopwatch!.elapsedMilliseconds ~/ 1000;
 
     // Check game over condition (ball hit bottom)
     if (ballY + ballRadius >= screenHeight) {
+      developer.log(
+        'Game Over: ball hit bottom at $ballY (screenHeight: $screenHeight)',
+        name: 'GameViewModel',
+      );
       endGame();
       return;
     }
 
-    // Keep ball within screen bounds horizontally (shouldn't happen but safety)
+    // Keep ball within screen bounds horizontally
     if (ballX - ballRadius < 0) {
       ballX = ballRadius;
     } else if (ballX + ballRadius > screenWidth) {
@@ -113,6 +137,10 @@ class GameViewModel extends ChangeNotifier {
 
   void onTap() {
     if (!isGameRunning || isGameOver) {
+      developer.log(
+        'Tap on game over/menu, starting game',
+        name: 'GameViewModel',
+      );
       startGame();
       return;
     }
@@ -123,6 +151,7 @@ class GameViewModel extends ChangeNotifier {
   }
 
   void endGame() {
+    developer.log('Ending game. Score: $score', name: 'GameViewModel');
     isGameRunning = false;
     isGameOver = true;
 
@@ -131,7 +160,7 @@ class GameViewModel extends ChangeNotifier {
       highScore = score;
     }
 
-    // Add to all-time high scores if it's high enough and sort/trim list
+    // Add to all-time high scores
     if (!allTimeHighScores.contains(score) && score > 0) {
       allTimeHighScores.add(score);
       allTimeHighScores.sort((a, b) => b.compareTo(a));
@@ -141,18 +170,21 @@ class GameViewModel extends ChangeNotifier {
     }
 
     _gameTimer?.cancel();
-    _stopwatch.stop();
+    _stopwatch?.stop();
     notifyListeners();
   }
 
   void restartGame() {
+    developer.log('Restarting game', name: 'GameViewModel');
     _gameTimer?.cancel();
     startGame();
   }
 
   @override
   void dispose() {
+    developer.log('Disposing GameViewModel', name: 'GameViewModel');
     _gameTimer?.cancel();
+    _stopwatch?.stop();
     super.dispose();
   }
 }

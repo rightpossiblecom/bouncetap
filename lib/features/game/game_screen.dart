@@ -13,17 +13,6 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final viewModel = context.read<GameViewModel>();
-      final screenSize = MediaQuery.of(context).size;
-      viewModel.initializeScreen(screenSize.width, screenSize.height);
-      viewModel.startGame();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -31,82 +20,138 @@ class _GameScreenState extends State<GameScreen> {
       backgroundColor: colorScheme.surface,
       body: Consumer<GameViewModel>(
         builder: (context, viewModel, child) {
-          return GestureDetector(
-            onTap: viewModel.onTap,
-            child: Stack(
-              children: [
-                // Game canvas with ball
-                CustomPaint(
-                  painter: BallPainter(
-                    ballX: viewModel.ballX,
-                    ballY: viewModel.ballY,
-                    ballRadius: GameViewModel.ballRadius,
-                    ballColor: colorScheme.primary,
-                  ),
-                  size: Size.infinite,
-                ),
-                // Score display
-                Positioned(
-                  top: 40,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Text(
-                      'Score: ${viewModel.score}',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.onSurface,
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              // Update dimensions if changed
+              if (viewModel.screenWidth != constraints.maxWidth ||
+                  viewModel.screenHeight != constraints.maxHeight) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  viewModel.initializeScreen(
+                    constraints.maxWidth,
+                    constraints.maxHeight,
+                  );
+                });
+              }
+
+              return GestureDetector(
+                onTap: viewModel.onTap,
+                child: Stack(
+                  children: [
+                    // Game canvas with ball
+                    CustomPaint(
+                      painter: BallPainter(
+                        ballX: viewModel.ballX,
+                        ballY: viewModel.ballY,
+                        ballRadius: GameViewModel.ballRadius,
+                        ballColor: colorScheme.primary,
+                      ),
+                      size: Size.infinite,
+                    ),
+                    // Score display
+                    Positioned(
+                      top: 40,
+                      left: 0,
+                      right: 0,
+                      child: Center(
+                        child: Text(
+                          'Score: ${viewModel.score}',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                    // Navigation buttons
+                    Positioned(
+                      top: 40,
+                      left: 16,
+                      child: IconButton(
+                        icon: const Icon(Icons.settings),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SettingsScreen(),
+                            ),
+                          );
+                        },
+                        color: colorScheme.onSurface,
+                        iconSize: 32,
+                      ),
+                    ),
+                    Positioned(
+                      top: 40,
+                      right: 16,
+                      child: IconButton(
+                        icon: const Icon(Icons.emoji_events),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HighScoresScreen(),
+                            ),
+                          );
+                        },
+                        color: colorScheme.onSurface,
+                        iconSize: 32,
+                      ),
+                    ),
+                    // Initial Start overlay
+                    if (!viewModel.isGameRunning && !viewModel.isGameOver)
+                      const StartOverlay(),
+                    // Game Over overlay
+                    if (viewModel.isGameOver)
+                      GameOverOverlay(
+                        score: viewModel.score,
+                        onRestart: viewModel.restartGame,
+                        onHome: () => Navigator.pop(context),
+                      ),
+                  ],
                 ),
-                // Navigation buttons
-                Positioned(
-                  top: 40,
-                  left: 16,
-                  child: IconButton(
-                    icon: const Icon(Icons.settings),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SettingsScreen(),
-                        ),
-                      );
-                    },
-                    color: colorScheme.onSurface,
-                    iconSize: 32,
-                  ),
-                ),
-                Positioned(
-                  top: 40,
-                  right: 16,
-                  child: IconButton(
-                    icon: const Icon(Icons.emoji_events),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HighScoresScreen(),
-                        ),
-                      );
-                    },
-                    color: colorScheme.onSurface,
-                    iconSize: 32,
-                  ),
-                ),
-                // Game Over overlay
-                if (viewModel.isGameOver)
-                  GameOverOverlay(
-                    score: viewModel.score,
-                    onRestart: viewModel.restartGame,
-                    onHome: () => Navigator.pop(context),
-                  ),
-              ],
-            ),
+              );
+            },
           );
         },
+      ),
+    );
+  }
+}
+
+class StartOverlay extends StatelessWidget {
+  const StartOverlay({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      color: Colors.black.withValues(alpha: 0.3),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.touch_app, size: 80, color: colorScheme.primary),
+            const SizedBox(height: 20),
+            Text(
+              'Tap to Start',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Don\'t let the ball hit the bottom!',
+              style: TextStyle(
+                fontSize: 18,
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
