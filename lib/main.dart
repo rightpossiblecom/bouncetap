@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
         title: 'BounceTap',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        themeMode: ThemeMode.dark,
         home: const HomeScreen(),
       ),
     );

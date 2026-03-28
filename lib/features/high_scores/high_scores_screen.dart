@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/theme/app_theme.dart';
 import '../game/game_view_model.dart';
 
 class HighScoresScreen extends StatelessWidget {
@@ -7,10 +8,13 @@ class HighScoresScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Top Taps'), centerTitle: true),
+      backgroundColor: AppTheme.navy,
+      appBar: AppBar(
+        backgroundColor: AppTheme.navy,
+        title: const Text('LEADERBOARD'),
+        centerTitle: true,
+      ),
       body: Consumer<GameViewModel>(
         builder: (context, viewModel, child) {
           final scores = viewModel.allTimeHighScores;
@@ -22,27 +26,37 @@ class HighScoresScreen extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.emoji_events_outlined,
-                    size: 100,
-                    color: colorScheme.outline.withOpacity(0.5),
+                    size: 80,
+                    color: AppTheme.slate,
                   ),
                   const SizedBox(height: 20),
                   const Text(
-                    'No scores yet!',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    'No scores yet',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.white,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  const Text('Play a game and set a record!'),
+                  const Text(
+                    'Play a game to set your first record',
+                    style: TextStyle(color: AppTheme.lightSlate),
+                  ),
                 ],
               ),
             );
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 16),
+            padding: const EdgeInsets.all(20),
             itemCount: scores.length,
             itemBuilder: (context, index) {
-              final score = scores[index];
-              return _buildScoreTile(index + 1, score, colorScheme);
+              return _buildScoreRow(
+                index + 1,
+                scores[index],
+                viewModel.highScore,
+              );
             },
           );
         },
@@ -50,52 +64,85 @@ class HighScoresScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScoreTile(int rank, int score, ColorScheme colorScheme) {
-    Color? rankColor;
-    double? elevation;
+  Widget _buildScoreRow(int rank, int score, int highScore) {
+    final isTop3 = rank <= 3;
+    final Color medalColor;
+    final IconData? medalIcon;
 
-    // Apply special styling for top 3
-    if (rank == 1) {
-      rankColor = Colors.amber;
-      elevation = 4;
-    } else if (rank == 2) {
-      rankColor = Colors.grey[400];
-      elevation = 2;
-    } else if (rank == 3) {
-      rankColor = Colors.brown[300];
-      elevation = 1;
+    switch (rank) {
+      case 1:
+        medalColor = AppTheme.gold;
+        medalIcon = Icons.looks_one_rounded;
+        break;
+      case 2:
+        medalColor = AppTheme.silver;
+        medalIcon = Icons.looks_two_rounded;
+        break;
+      case 3:
+        medalColor = AppTheme.bronze;
+        medalIcon = Icons.looks_3_rounded;
+        break;
+      default:
+        medalColor = AppTheme.slate;
+        medalIcon = null;
     }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Card(
-        elevation: elevation ?? 0.5,
-        color: elevation != null ? colorScheme.surfaceContainerHighest : null,
-        child: ListTile(
-          leading: Container(
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: isTop3 ? AppTheme.deepBlue : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color:
+              isTop3 ? medalColor.withValues(alpha: 0.3) : const Color(0xFF1D3461),
+        ),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
             width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: rankColor ?? colorScheme.secondaryContainer,
-              shape: BoxShape.circle,
-            ),
+            child: medalIcon != null
+                ? Icon(medalIcon, color: medalColor, size: 28)
+                : Text(
+                    '#$rank',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.slate,
+                    ),
+                  ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Text(
-              '#$rank',
+              '$score',
               style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: rankColor != null
-                    ? Colors.black
-                    : colorScheme.onSecondaryContainer,
+                fontSize: isTop3 ? 24 : 20,
+                fontWeight: FontWeight.w800,
+                color: isTop3 ? AppTheme.white : AppTheme.lightSlate,
               ),
             ),
           ),
-          title: Text(
-            'Score: $score',
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-          ),
-          trailing: const Icon(Icons.timer_outlined, size: 20),
-        ),
+          if (score == highScore)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text(
+                'BEST',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.accent,
+                  letterSpacing: 1.5,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
